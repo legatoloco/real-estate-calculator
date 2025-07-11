@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration du Projet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        .nav-tabs .nav-link.active {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        .nav-tabs .nav-link {
+            color: #0d6efd;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .text-muted {
+            cursor: help;
+        }
+        .alert {
+            border-radius: 8px;
+        }
+        .tab-content {
+            min-height: 400px;
+        }
+    </style>
+    <!-- Include the calculation model -->
+    <script src="resl-estate-calculator.js"></script>
+</head>
+<body>    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Progression</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress mb-3">
+                            <div class="progress-bar" role="progressbar" style="width: 12%" id="progressBar"></div>
+                        </div>
+                        <small class="text-muted">Étape 1 sur 8</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <h2 class="mb-4">Configurer le projet : <span id="projectName">Résidence Les Jardins</span></h2>
+            </div>
+        </div>
+        
+        <ul class="nav nav-tabs" id="configTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="operation-tab" data-bs-toggle="tab" data-bs-target="#operation" type="button" role="tab">Détails de l'opération</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="commercialization-tab" data-bs-toggle="tab" data-bs-target="#commercialization" type="button" role="tab">Commercialisation</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="financials-tab" data-bs-toggle="tab" data-bs-target="#financials" type="button" role="tab">Financier</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="cashflow-tab" data-bs-toggle="tab" data-bs-target="#cashflow" type="button" role="tab">Trésorerie</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="partners-tab" data-bs-toggle="tab" data-bs-target="#partners" type="button" role="tab">Partenaires</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="advances-tab" data-bs-toggle="tab" data-bs-target="#advances" type="button" role="tab">Avances Tiers</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab">Paramètres</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="review-tab" data-bs-toggle="tab" data-bs-target="#review" type="button" role="tab">Résumé</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="results-tab" data-bs-toggle="tab" data-bs-target="#results" type="button" role="tab">Résultats</button>
+        </li>
+    </ul>
+    <div class="tab-content p-4 border border-top-0 bg-white" id="configTabsContent">
+        <!-- Détails de l'opération -->
+        <div class="tab-pane fade show active" id="operation" role="tabpanel">
+            <div class="alert alert-info mb-4">
+                <h6 class="alert-heading">Bienvenue dans l'outil de calcul immobilier</h6>
+                <p class="mb-0">Configurez votre projet immobilier en remplissant les informations dans chaque onglet. Des valeurs par défaut sont pré-remplies pour vous aider à commencer.</p>
+            </div>
+            <form id="operationForm">
+                <div class="mb-3">
+                    <label for="projectNameInput" class="form-label">Nom du projet</label>
+                    <input type="text" class="form-control" id="projectNameInput" value="Résidence Les Jardins" required>
+                </div>
+                <div class="mb-3">
+                    <label for="operationType" class="form-label">Type d'opération</label>
+                    <select class="form-select" id="operationType" required>
+                        <option value="Résidentiel" selected>Résidentiel</option>
+                        <option value="Tertiaire">Tertiaire</option>
+                        <option value="Portage de terrain">Portage de terrain</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="acquisitionDate" class="form-label">Date d'acquisition</label>
+                    <input type="date" class="form-control" id="acquisitionDate" value="2025-01-01" required>
+                </div>
+                <div class="mb-3">
+                    <label for="osDate" class="form-label">Date de début des travaux (OS)</label>
+                    <input type="date" class="form-control" id="osDate" value="2025-06-01" required>
+                </div>
+                <div class="mb-3">
+                    <label for="datDate" class="form-label">Date de fin des travaux (DAT)</label>
+                    <input type="date" class="form-control" id="datDate" value="2026-12-31" required>
+                </div>
+                <div class="mb-3">
+                    <label for="permitDates" class="form-label">Dates des permis</label>
+                    <input type="text" class="form-control" id="permitDates" placeholder="ex : 2025-03-01" value="2025-03-01">
+                </div>
+                <div class="mb-3">
+                    <label for="portagePeriod" class="form-label">Période de portage (Début/Fin)</label>
+                    <input type="text" class="form-control" id="portagePeriod" placeholder="ex : 2025-01-01 à 2025-05-31" value="2025-01-01 à 2025-05-31">
+                </div>
+            </form>
+        </div>
+        <!-- Commercialisation -->
+        <div class="tab-pane fade" id="commercialization" role="tabpanel">
+            <form id="commercializationForm">
+                <div class="mb-3">
+                    <label for="monthlyRates" class="form-label">Taux de commercialisation mensuels (%)</label>
+                    <input type="text" class="form-control" id="monthlyRates" value="Jan : 0, Fév : 0, Mar : 0, Avr : 0, Mai : 0, Juin : 5, Juil : 8, Aoû : 12, Sep : 15, Oct : 18, Nov : 20, Déc : 22">
+                </div>
+                <div class="mb-3">
+                    <label for="thresholdDates" class="form-label">Dates des seuils (50%, 75%)</label>
+                    <input type="text" class="form-control" id="thresholdDates" value="50% : 2025-09-01, 75% : 2025-12-01">
+                </div>
+            </form>
+        </div>
+        <!-- Financier -->
+        <div class="tab-pane fade" id="financials" role="tabpanel">
+            <form id="financialsForm">
+                <div class="mb-3">
+                    <label for="ttc" class="form-label">Prix de revient technique (TTC)</label>
+                    <input type="number" class="form-control" id="ttc" step="0.01" value="2500000" required>
+                </div>
+                <div class="mb-3">
+                    <label for="landPrice" class="form-label">Prix du terrain (HT)</label>
+                    <input type="number" class="form-control" id="landPrice" step="0.01" value="500000" required>
+                </div>
+                <div class="mb-3">
+                    <label for="internalFees" class="form-label">Frais de vente interne</label>
+                    <input type="number" class="form-control" id="internalFees" step="0.01" value="75000">
+                </div>
+                <div class="mb-3">
+                    <label for="externalFees" class="form-label">Frais de vente externe</label>
+                    <input type="number" class="form-control" id="externalFees" step="0.01" value="50000">
+                </div>
+                <div class="mb-3">
+                    <label for="notaryFees" class="form-label">Frais de notaire</label>
+                    <input type="number" class="form-control" id="notaryFees" step="0.01" value="25000">
+                </div>
+                <div class="mb-3">
+                    <label for="rentalMarketingFees" class="form-label">Frais de commercialisation locative</label>
+                    <input type="number" class="form-control" id="rentalMarketingFees" step="0.01" value="15000">
+                </div>
+                <div class="mb-3">
+                    <label for="rentalGuarantee" class="form-label">Garantie locative</label>
+                    <input type="number" class="form-control" id="rentalGuarantee" step="0.01" value="10000">
+                </div>
+                <div class="mb-3">
+                    <label for="financialCharges" class="form-label">Frais financiers (intérêts, stock, autres)</label>
+                    <input type="number" class="form-control" id="financialCharges" step="0.01" value="120000">
+                </div>
+                <div class="mb-3">
+                    <label for="groupManagementFees" class="form-label">Frais de gestion groupe</label>
+                    <input type="number" class="form-control" id="groupManagementFees" step="0.01" value="35000">
+                </div>
+                <div class="mb-3">
+                    <label for="additionalBudgetItems" class="form-label">Autres postes budgétaires/frais</label>
+                    <input type="number" class="form-control" id="additionalBudgetItems" step="0.01" value="20000">
+                </div>
+            </form>
+        </div>
+        <!-- Trésorerie -->
+        <div class="tab-pane fade" id="cashflow" role="tabpanel">
+            <form id="cashflowForm">
+                <div class="mb-3">
+                    <label for="monthlyInflows" class="form-label">Encaissements mensuels (€/mois)</label>
+                    <input type="text" class="form-control" id="monthlyInflows" value="Jan:0,Feb:0,Mar:0,Apr:0,May:0,Jun:0,Jul:0,Aug:0,Sep:400000,Oct:600000,Nov:800000,Dec:1000000">
+                </div>
+                <div class="mb-3">
+                    <label for="monthlyOutflows" class="form-label">Décaissements mensuels (€/mois)</label>
+                    <input type="text" class="form-control" id="monthlyOutflows" value="Jan:600000,Feb:400000,Mar:400000,Apr:400000,May:800000,Jun:800000,Jul:800000,Aug:800000,Sep:200000,Oct:200000,Nov:200000,Dec:200000">
+                </div>
+            </form>
+        </div>
+        <!-- Partenaires -->
+        <div class="tab-pane fade" id="partners" role="tabpanel">
+            <form id="partnersForm">
+                <div class="mb-3">
+                    <label for="partnerName" class="form-label">Nom du partenaire</label>
+                    <input type="text" class="form-control" id="partnerName" value="Investisseur Principal">
+                </div>
+                <div class="mb-3">
+                    <label for="equityContribution" class="form-label">Apport en fonds propres</label>
+                    <input type="number" class="form-control" id="equityContribution" step="0.01" value="500000">
+                </div>
+                <div class="mb-3">
+                    <label for="shareOfEquity" class="form-label">Quote-part de fonds propres (%)</label>
+                    <input type="number" class="form-control" id="shareOfEquity" step="0.01" value="100">
+                </div>
+                <div class="mb-3">
+                    <label for="shareOfProfit" class="form-label">Quote-part de la marge (%)</label>
+                    <input type="number" class="form-control" id="shareOfProfit" step="0.01" value="100">
+                </div>
+                <div class="mb-3">
+                    <label for="remunerationRate" class="form-label">Taux de rémunération (% ou TRI cible)</label>
+                    <input type="text" class="form-control" id="remunerationRate" value="8">
+                </div>
+                <button type="button" class="btn btn-secondary" id="addPartner">Ajouter un partenaire</button>
+            </form>
+            <div class="mt-3">
+                <h6>Liste des partenaires</h6>
+                <ul class="list-group" id="partnersList">
+                    <!-- Partners will be added dynamically -->
+                </ul>
+            </div>
+        </div>
+        <!-- Avances Tiers -->
+        <div class="tab-pane fade" id="advances" role="tabpanel">
+            <form id="advancesForm">
+                <div class="mb-3">
+                    <label for="advanceAmount" class="form-label">Montant de l'avance</label>
+                    <input type="number" class="form-control" id="advanceAmount" step="0.01" value="100000">
+                </div>
+                <div class="mb-3">
+                    <label for="advancePeriod" class="form-label">Période de l'avance (Début/Fin)</label>
+                    <input type="text" class="form-control" id="advancePeriod" placeholder="ex : 2025-01-01 à 2025-12-31" value="2025-01-01 à 2025-12-31">
+                </div>
+                <div class="mb-3">
+                    <label for="advanceInterestRate" class="form-label">Taux d'intérêt de l'avance (%)</label>
+                    <input type="number" class="form-control" id="advanceInterestRate" step="0.01" value="2.5">
+                </div>
+                <button type="button" class="btn btn-secondary" id="addAdvance">Ajouter une avance</button>
+            </form>
+            <div class="mt-3">
+                <h6>Liste des avances</h6>
+                <ul class="list-group" id="advancesList">
+                    <!-- Advances will be added dynamically -->
+                </ul>
+            </div>
+        </div>
+        <!-- Paramètres -->
+        <div class="tab-pane fade" id="parameters" role="tabpanel">
+            <form id="parametersForm">
+                <div class="mb-3">
+                    <label for="corporateTaxRate" class="form-label">Taux d'impôt sur les sociétés (IS) (%)</label>
+                    <input type="number" class="form-control" id="corporateTaxRate" step="0.01" value="25">
+                </div>
+                <div class="mb-3">
+                    <label for="debtInterestRate" class="form-label">Taux d'intérêt de la dette (mensuel, %)</label>
+                    <input type="number" class="form-control" id="debtInterestRate" step="0.01" value="0.5">
+                </div>
+                <div class="mb-3">
+                    <label for="normativeMonthlyRate" class="form-label">Taux mensuel normatif pour le plafond des fonds propres (%)</label>
+                    <input type="number" class="form-control" id="normativeMonthlyRate" step="0.01" value="10">
+                </div>
+                <div class="mb-3">
+                    <label for="portageRate" class="form-label">Taux de portage (%)</label>
+                    <input type="number" class="form-control" id="portageRate" step="0.01" value="20">
+                </div>
+                <div class="mb-3">
+                    <label for="customBankEquityCapRate" class="form-label">Taux plafond fonds propres banque (%)</label>
+                    <input type="number" class="form-control" id="customBankEquityCapRate" step="0.01" value="">
+                </div>
+                <div class="mb-3">
+                    <label for="manualOverrides" class="form-label">Surcharges/Modifications manuelles</label>
+                    <input type="text" class="form-control" id="manualOverrides" value="">
+                </div>
+                <div class="mb-3">
+                    <label for="customScenarioParams" class="form-label">Paramètres de scénario personnalisé</label>
+                    <input type="text" class="form-control" id="customScenarioParams" value="">
+                </div>
+            </form>
+        </div>
+        <!-- Résumé -->
+        <div class="tab-pane fade" id="review" role="tabpanel">
+            <h5>Résumé & Soumission</h5>
+            <div id="reviewContent">
+                <p>Ce volet résumera toutes les données saisies pour une dernière vérification avant le calcul.</p>
+                <div id="reviewSummary"></div>
+            </div>
+            <button class="btn btn-primary" id="calculateBtn">Calculer</button>
+        </div>
+        <!-- Résultats -->
+        <div class="tab-pane fade" id="results" role="tabpanel">
+            <h5>Résultats du Calcul</h5>
+            <div id="calculationResults">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Effectuez d'abord le calcul pour voir les résultats.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * UI Integration and Event Handling
+ */
+class CalculatorUI {
+    constructor() {
+        this.calculator = new RealEstateCalculator();
+        this.currentProject = null;
+        this.partners = [];
+        this.advances = [];
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Calculate button
+        document.getElementById('calculateBtn').addEventListener('click', () => {
+            this.runCalculation();
+        });
+
+        // Partner management
+        document.getElementById('addPartner').addEventListener('click', () => {
+            this.addPartner();
+        });
+
+        // Advance management
+        document.getElementById('addAdvance').addEventListener('click', () => {
+            this.addAdvance();
+        });
+
+        // Tab switching to review
+        document.getElementById('review-tab').addEventListener('click', () => {
+            this.updateReviewSummary();
+        });
+
+        // Project name update
+        document.getElementById('projectNameInput').addEventListener('input', (e) => {
+            document.getElementById('projectName').textContent = e.target.value || 'Résidence Les Jardins';
+        });
+
+        // Form validation
+        this.setupFormValidation();
+
+        // Initialize tooltips
+        this.initializeTooltips();
+
+        // Setup progress tracking
+        this.setupProgressTracking();
+    }
+
+    initializeTooltips() {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    }
+
+    setupProgressTracking() {
+        const tabs = document.querySelectorAll('.nav-link');
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('shown.bs.tab', () => {
+                const progress = ((index + 1) / tabs.length) * 100;
+                document.getElementById('progressBar').style.width = progress + '%';
+                document.querySelector('.card-body small').textContent = `Étape ${index + 1} sur ${tabs.length}`;
+            });
+        });
+    }
+
+    setupFormValidation() {
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            const inputs = form.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('blur', () => this.validateInput(input));
+            });
+        });
+    }
+
+    validateInput(input) {
+        if (input.hasAttribute('required') && !input.value) {
+            input.classList.add('is-invalid');
+            return false;
+        } else {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            return true;
+        }
+    }
+
+    collectFormData() {
+        const formData = {};
+        
+        // Collect all form inputs
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.id) {
+                formData[input.id] = input.value;
+            }
+        });
+
+        // Normalize monthly inflows and outflows for calculator compatibility
+        const monthMap = {
+            'Jan': 'Jan', 'Janv': 'Jan', 'Fév': 'Feb', 'Fev': 'Feb', 'Mar': 'Mar', 'Avr': 'Apr', 'Mai': 'May', 'Juin': 'Jun', 'Juil': 'Jul', 'Aoû': 'Aug', 'Aou': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov', 'Déc': 'Dec', 'Dec': 'Dec'
+        };
+        function normalizeMonthlyString(str) {
+            if (!str) return '';
+            return str.split(',').map(pair => {
+                let [month, value] = pair.split(':');
+                if (!month || !value) return '';
+                month = month.trim();
+                value = value.trim();
+                // Remove accents for matching
+                const monthKey = month.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\.$/, '');
+                // Find English equivalent
+                let engMonth = monthMap[monthKey] || monthKey;
+                return engMonth + ':' + value;
+            }).filter(Boolean).join(',');
+        }
+        if (formData.monthlyInflows) {
+            formData.monthlyInflows = normalizeMonthlyString(formData.monthlyInflows);
+        }
+        if (formData.monthlyOutflows) {
+            formData.monthlyOutflows = normalizeMonthlyString(formData.monthlyOutflows);
+        }
+
+        // Add partners and advances
+        formData.partners = this.partners;
+        formData.advances = this.advances;
+
+        return formData;
+    }
+
+    addPartner() {
+        const name = document.getElementById('partnerName').value;
+        const equity = parseFloat(document.getElementById('equityContribution').value) || 0;
+        const equityShare = parseFloat(document.getElementById('shareOfEquity').value) || 0;
+        const profitShare = parseFloat(document.getElementById('shareOfProfit').value) || 0;
+        const remuneration = document.getElementById('remunerationRate').value;
+
+        if (name && equity > 0) {
+            const partner = {
+                name,
+                equityContribution: equity,
+                shareOfEquity: equityShare,
+                shareOfProfit: profitShare,
+                remunerationRate: remuneration
+            };
+
+            this.partners.push(partner);
+            this.updatePartnersList();
+            this.clearPartnerForm();
+        }
+    }
+
+    updatePartnersList() {
+        const list = document.getElementById('partnersList');
+        list.innerHTML = '';
+
+        this.partners.forEach((partner, index) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.innerHTML = `
+                <span>${partner.name} - ${partner.equityContribution.toLocaleString()}€ (${partner.shareOfEquity}%)</span>
+                <button class="btn btn-sm btn-danger" onclick="calculatorUI.removePartner(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
+            list.appendChild(listItem);
+        });
+    }
+
+    removePartner(index) {
+        this.partners.splice(index, 1);
+        this.updatePartnersList();
+    }
+
+    clearPartnerForm() {
+        document.getElementById('partnerName').value = '';
+        document.getElementById('equityContribution').value = '';
+        document.getElementById('shareOfEquity').value = '';
+        document.getElementById('shareOfProfit').value = '';
+        document.getElementById('remunerationRate').value = '';
+    }
+
+    addAdvance() {
+        const amount = parseFloat(document.getElementById('advanceAmount').value) || 0;
+        const period = document.getElementById('advancePeriod').value;
+        const rate = parseFloat(document.getElementById('advanceInterestRate').value) || 0;
+
+        if (amount > 0 && period) {
+            const advance = {
+                amount,
+                period,
+                interestRate: rate
+            };
+
+            this.advances.push(advance);
+            this.updateAdvancesList();
+            this.clearAdvanceForm();
+        }
+    }
+
+    updateAdvancesList() {
+        const list = document.getElementById('advancesList');
+        list.innerHTML = '';
+
+        this.advances.forEach((advance, index) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.innerHTML = `
+                <span>${advance.amount.toLocaleString()}€ - ${advance.period} (${advance.interestRate}%)</span>
+                <button class="btn btn-sm btn-danger" onclick="calculatorUI.removeAdvance(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
+            list.appendChild(listItem);
+        });
+    }
+
+    removeAdvance(index) {
+        this.advances.splice(index, 1);
+        this.updateAdvancesList();
+    }
+
+    clearAdvanceForm() {
+        document.getElementById('advanceAmount').value = '';
+        document.getElementById('advancePeriod').value = '';
+        document.getElementById('advanceInterestRate').value = '';
+    }
+
+    updateReviewSummary() {
+        const formData = this.collectFormData();
+        const summary = document.getElementById('reviewSummary');
+        
+        summary.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Détails de l'opération</h6>
+                    <p><strong>Type:</strong> ${formData.operationType}</p>
+                    <p><strong>Acquisition:</strong> ${formData.acquisitionDate}</p>
+                    <p><strong>Début travaux:</strong> ${formData.osDate}</p>
+                    <p><strong>Fin travaux:</strong> ${formData.datDate}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Financier</h6>
+                    <p><strong>TTC:</strong> ${parseFloat(formData.ttc || 0).toLocaleString()}€</p>
+                    <p><strong>Terrain:</strong> ${parseFloat(formData.landPrice || 0).toLocaleString()}€</p>
+                    <p><strong>Partenaires:</strong> ${this.partners.length}</p>
+                    <p><strong>Avances:</strong> ${this.advances.length}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    runCalculation() {
+        try {
+            const formData = this.collectFormData();
+            
+            // Validate required fields
+            if (!this.validateRequiredFields(formData)) {
+                alert('Veuillez remplir tous les champs obligatoires.');
+                return;
+            }
+
+            // Initialize project
+            this.calculator.initializeProject(formData);
+            
+            // Run calculation
+            const results = this.calculator.calculate();
+            
+            // Display results
+            this.displayResults(results);
+            
+            // Switch to results tab
+            document.getElementById('results-tab').click();
+            
+        } catch (error) {
+            console.error('Calculation error:', error);
+            alert('Erreur lors du calcul: ' + error.message);
+        }
+    }
+
+    validateRequiredFields(formData) {
+        const required = ['operationType', 'acquisitionDate', 'osDate', 'datDate', 'ttc', 'landPrice'];
+        return required.every(field => formData[field] && formData[field].trim() !== '');
+    }
+
+    displayResults(results) {
+        const resultsDiv = document.getElementById('calculationResults');
+        
+        resultsDiv.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6>Résumé Financier</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Total Encaissements:</strong> ${results.summary.totalInflows.toLocaleString()}€</p>
+                            <p><strong>Total Décaissements:</strong> ${results.summary.totalOutflows.toLocaleString()}€</p>
+                            <p><strong>Résultat Net:</strong> ${results.summary.netResult.toLocaleString()}€</p>
+                            <p><strong>Fonds Propres Max:</strong> ${results.summary.maxEquity.toLocaleString()}€</p>
+                            <p><strong>Dette Max:</strong> ${results.summary.maxDebt.toLocaleString()}€</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6>Actions Recommandées</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <p><strong>Moments clés de trésorerie:</strong></p>
+                                ${results.summary.cashflowTurns.map(turn => 
+                                    `<small>• ${turn.date.toLocaleDateString('fr-FR')}: ${turn.from} → ${turn.to}</small>`
+                                ).join('<br>')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between">
+                            <h6>Projections Mensuelle</h6>
+                            <button class="btn btn-sm btn-secondary" onclick="calculatorUI.exportResults()">
+                                <i class="bi bi-download"></i> Exporter CSV
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Mois</th>
+                                            <th>Encaissement</th>
+                                            <th>Décaissement</th>
+                                            <th>Flux Net</th>
+                                            <th>FP Cumulé</th>
+                                            <th>Dette Cumulée</th>
+                                            <th>Trésorerie</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthlyProjectionsTable">
+                                        ${results.projections.map(p => `
+                                            <tr>
+                                                <td>${p.month}</td>
+                                                <td>${p.inflow.toLocaleString()}€</td>
+                                                <td>${p.outflow.toLocaleString()}€</td>
+                                                <td>${p.netCashflow.toLocaleString()}€</td>
+                                                <td>${p.cumulativeEquity.toLocaleString()}€</td>
+                                                <td>${p.cumulativeDebt.toLocaleString()}€</td>
+                                                <td>${p.cashPosition.toLocaleString()}€</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    exportResults() {
+        // Export functionality will be implemented here
+        console.log('Export results functionality');
+    }
+}
+
+// Initialize the calculator UI when the page loads
+const calculatorUI = new CalculatorUI();
+</script>
+
+</body>
+</html>

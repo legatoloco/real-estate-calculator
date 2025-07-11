@@ -1,0 +1,518 @@
+/**
+ * Real Estate Investment Calculation Model
+ * Core calculation engine for real estate investment projects
+ */
+
+class RealEstateCalculator {
+    constructor() {
+        this.project = null;
+        this.results = null;
+    }
+
+    /**
+     * Initialize a new project with input data
+     * @param {Object} projectData - All project input data
+     */
+    initializeProject(projectData) {
+        this.project = {
+            // Operation details
+            operationType: projectData.operationType || 'Résidentiel',
+            acquisitionDate: new Date(projectData.acquisitionDate),
+            osDate: new Date(projectData.osDate),
+            datDate: new Date(projectData.datDate),
+            permitDates: this.parseDates(projectData.permitDates),
+            portagePeriod: this.parseDateRange(projectData.portagePeriod),
+            
+            // Commercialization
+            monthlyRates: this.parseMonthlyRates(projectData.monthlyRates),
+            thresholdDates: this.parseThresholdDates(projectData.thresholdDates),
+            
+            // Financial data
+            ttc: parseFloat(projectData.ttc) || 0,
+            landPrice: parseFloat(projectData.landPrice) || 0,
+            internalFees: parseFloat(projectData.internalFees) || 0,
+            externalFees: parseFloat(projectData.externalFees) || 0,
+            notaryFees: parseFloat(projectData.notaryFees) || 0,
+            rentalMarketingFees: parseFloat(projectData.rentalMarketingFees) || 0,
+            rentalGuarantee: parseFloat(projectData.rentalGuarantee) || 0,
+            financialCharges: parseFloat(projectData.financialCharges) || 0,
+            groupManagementFees: parseFloat(projectData.groupManagementFees) || 0,
+            additionalBudgetItems: parseFloat(projectData.additionalBudgetItems) || 0,
+            
+            // Parameters
+            corporateTaxRate: parseFloat(projectData.corporateTaxRate) || 25,
+            debtInterestRate: parseFloat(projectData.debtInterestRate) || 0.5,
+            normativeMonthlyRate: parseFloat(projectData.normativeMonthlyRate) || 10,
+            portageRate: parseFloat(projectData.portageRate) || 20,
+            customBankEquityCapRate: parseFloat(projectData.customBankEquityCapRate) || null,
+            
+            // Cashflow
+            monthlyInflows: this.parseMonthlyValues(projectData.monthlyInflows),
+            monthlyOutflows: this.parseMonthlyValues(projectData.monthlyOutflows),
+            
+            // Partners
+            partners: projectData.partners || [],
+            
+            // Third-party advances
+            advances: projectData.advances || []
+        };
+        
+        this.validateProject();
+        return this.project;
+    }
+
+    /**
+     * Parse date strings into Date objects
+     */
+    parseDates(dateStr) {
+        if (!dateStr) return [];
+        return dateStr.split(',').map(d => new Date(d.trim()));
+    }
+
+    /**
+     * Parse date range string
+     */
+    parseDateRange(rangeStr) {
+        if (!rangeStr) return null;
+        const parts = rangeStr.split(' à ');
+        if (parts.length !== 2) return null;
+        return {
+            start: new Date(parts[0].trim()),
+            end: new Date(parts[1].trim())
+        };
+    }
+
+    /**
+     * Parse monthly rates from string
+     */
+    parseMonthlyRates(rateStr) {
+        if (!rateStr) return {};
+        const rates = {};
+        const pairs = rateStr.split(',');
+        pairs.forEach(pair => {
+            const [month, rate] = pair.split(':');
+            if (month && rate) {
+                rates[month.trim()] = parseFloat(rate.trim());
+            }
+        });
+        return rates;
+    }
+
+    /**
+     * Parse threshold dates
+     */
+    parseThresholdDates(thresholdStr) {
+        if (!thresholdStr) return {};
+        const thresholds = {};
+        const pairs = thresholdStr.split(',');
+        pairs.forEach(pair => {
+            const [threshold, date] = pair.split(':');
+            if (threshold && date) {
+                thresholds[threshold.trim()] = new Date(date.trim());
+            }
+        });
+        return thresholds;
+    }
+
+    /**
+     * Parse monthly values from string
+     */
+    parseMonthlyValues(valueStr) {
+        if (!valueStr) return {};
+        const values = {};
+        // Map French and English short/long month names to English short
+        const monthMap = {
+            'Jan': 'Jan', 'Janv': 'Jan', 'Fév': 'Feb', 'Fev': 'Feb', 'Feb': 'Feb', 'Mar': 'Mar', 'Mars': 'Mar',
+            'Avr': 'Apr', 'Avril': 'Apr', 'Apr': 'Apr', 'Mai': 'May', 'May': 'May', 'Juin': 'Jun', 'Jun': 'Jun',
+            'Juil': 'Jul', 'Juillet': 'Jul', 'Jul': 'Jul', 'Aoû': 'Aug', 'Aout': 'Aug', 'Août': 'Aug', 'Aug': 'Aug',
+            'Sep': 'Sep', 'Sept': 'Sep', 'Septembre': 'Sep', 'Oct': 'Oct', 'Octobre': 'Oct', 'Nov': 'Nov', 'Novembre': 'Nov',
+            'Déc': 'Dec', 'Dec': 'Dec', 'Décembre': 'Dec', 'December': 'Dec'
+        };
+        const pairs = valueStr.split(',');
+        pairs.forEach(pair => {
+            let [month, value] = pair.split(':');
+            if (month && value) {
+                month = month.trim();
+                value = value.trim();
+                // Remove accents for matching
+                const monthKey = month.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\.$/, '');
+                let engMonth = monthMap[monthKey] || monthKey;
+                values[engMonth] = parseFloat(value);
+            }
+        });
+        return values;
+    }
+
+    /**
+     * Validate project data
+     */
+    validateProject() {
+        if (!this.project) throw new Error('Project not initialized');
+        
+        // Validate required dates
+        if (!this.project.acquisitionDate || isNaN(this.project.acquisitionDate)) {
+            throw new Error('Valid acquisition date is required');
+        }
+        
+        if (!this.project.osDate || isNaN(this.project.osDate)) {
+            throw new Error('Valid construction start date (OS) is required');
+        }
+        
+        if (!this.project.datDate || isNaN(this.project.datDate)) {
+            throw new Error('Valid construction end date (DAT) is required');
+        }
+        
+        // Validate date sequence
+        if (this.project.acquisitionDate >= this.project.osDate) {
+            throw new Error('Acquisition date must be before construction start date');
+        }
+        
+        if (this.project.osDate >= this.project.datDate) {
+            throw new Error('Construction start date must be before construction end date');
+        }
+        
+        // Validate financial data
+        if (this.project.ttc <= 0) {
+            throw new Error('Technical cost price (TTC) must be positive');
+        }
+    }
+
+    /**
+     * Calculate adjusted technical cost price
+     */
+    calculateAdjustedTTC() {
+        const adjustments = 
+            this.project.internalFees +
+            this.project.externalFees +
+            this.project.notaryFees +
+            this.project.rentalMarketingFees +
+            this.project.rentalGuarantee +
+            this.project.financialCharges +
+            this.project.groupManagementFees;
+        const adjusted = this.project.ttc - adjustments;
+        console.log('[Adjusted TTC] TTC:', this.project.ttc, 'Adjustments:', adjustments, 'Adjusted TTC:', adjusted);
+        return adjusted;
+    }
+
+    /**
+     * Calculate normative monthly rate based on operation type and progress
+     */
+    calculateNormativeRate(date, commercializationProgress) {
+        const { operationType, thresholdDates, datDate, portagePeriod } = this.project;
+        console.log('[Normative Rate] Input:', { date, commercializationProgress, operationType });
+        // Handle land portage
+        if (portagePeriod && date >= portagePeriod.start && date <= portagePeriod.end) {
+            console.log('[Normative Rate] Portage period detected. Using portageRate:', this.project.portageRate);
+            return this.project.portageRate;
+        }
+        // Calculate months after DAT
+        const monthsAfterDAT = this.getMonthsDifference(datDate, date);
+        // After DAT+3 months, rate is 0
+        if (monthsAfterDAT >= 3) {
+            console.log('[Normative Rate] After DAT+3 months. Rate = 0');
+            return 0;
+        }
+        let rate;
+        switch (operationType) {
+            case 'Tertiaire':
+                if (monthsAfterDAT >= -2) { // DAT+2 months
+                    rate = 5;
+                } else {
+                    rate = 10;
+                }
+                break;
+            case 'Résidentiel':
+                if (commercializationProgress >= 75) {
+                    rate = 3.4;
+                } else if (commercializationProgress >= 50) {
+                    rate = 6.7;
+                } else {
+                    rate = 10;
+                }
+                break;
+            case 'Portage de terrain':
+                rate = this.project.portageRate;
+                break;
+            default:
+                rate = this.project.normativeMonthlyRate;
+        }
+        console.log('[Normative Rate] Result:', rate);
+        return rate;
+    }
+
+    /**
+     * Calculate equity cap for a given date
+     */
+    calculateEquityCap(date, commercializationProgress) {
+        const adjustedTTC = this.calculateAdjustedTTC();
+        const normativeRate = this.calculateNormativeRate(date, commercializationProgress);
+        // Use custom bank rate if provided
+        const rate = this.project.customBankEquityCapRate || normativeRate;
+        let result;
+        // Special case for land portage
+        if (this.project.portagePeriod && 
+            date >= this.project.portagePeriod.start && 
+            date <= this.project.portagePeriod.end) {
+            result = (rate / 100) * this.project.landPrice;
+            console.log('[Equity Cap] Portage period. Rate:', rate, 'Land Price:', this.project.landPrice, 'Equity Cap:', result);
+            return result;
+        }
+        result = (rate / 100) * adjustedTTC;
+        console.log('[Equity Cap] Rate:', rate, 'Adjusted TTC:', adjustedTTC, 'Equity Cap:', result);
+        return result;
+    }
+
+    /**
+     * Get difference in months between two dates
+     */
+    getMonthsDifference(date1, date2) {
+        const year1 = date1.getFullYear();
+        const month1 = date1.getMonth();
+        const year2 = date2.getFullYear();
+        const month2 = date2.getMonth();
+        
+        return (year2 - year1) * 12 + (month2 - month1);
+    }
+
+    /**
+     * Calculate commercialization progress for a given date
+     */
+    calculateCommercializationProgress(date) {
+        const { thresholdDates } = this.project;
+        let progress = 0;
+        if (thresholdDates['75%'] && date >= thresholdDates['75%']) {
+            progress = 75;
+        } else if (thresholdDates['50%'] && date >= thresholdDates['50%']) {
+            progress = 50;
+        }
+        // Calculate based on monthly rates if available
+        // This is a simplified calculation - in reality, you'd need more detailed logic
+        console.log('[Commercialization Progress] Date:', date, 'Progress:', progress);
+        return progress;
+    }
+
+    /**
+     * Generate monthly cashflow projections
+     */
+    generateCashflowProjections() {
+        const projections = [];
+        const startDate = new Date(this.project.acquisitionDate);
+        const endDate = new Date(this.project.datDate);
+        endDate.setMonth(endDate.getMonth() + 12); // Extend 12 months after DAT
+        
+        let currentDate = new Date(startDate);
+        let cumulativeEquity = 0;
+        let cumulativeDebt = 0;
+        let cashPosition = 0;
+         while (currentDate <= endDate) {
+            const month = currentDate.toISOString().substring(0, 7);
+            const commercializationProgress = this.calculateCommercializationProgress(currentDate);
+            const equityCap = this.calculateEquityCap(currentDate, commercializationProgress);
+
+            const monthKey = currentDate.toLocaleDateString('en-US', { month: 'short' });
+            const inflow = this.project.monthlyInflows[monthKey] || 0;
+            const outflow = this.project.monthlyOutflows[monthKey] || 0;
+
+            const netCashflow = inflow - outflow;
+
+            let monthlyEquity = 0;
+            let monthlyDebt = 0;
+            let debtRepayment = 0;
+
+            if (netCashflow < 0) {
+                const financingNeed = Math.abs(netCashflow);
+
+                if (cumulativeEquity < equityCap) {
+                    const availableEquity = equityCap - cumulativeEquity;
+                    monthlyEquity = Math.min(financingNeed, availableEquity);
+                    cumulativeEquity += monthlyEquity;
+                }
+
+                const remainingNeed = financingNeed - monthlyEquity;
+                if (remainingNeed > 0) {
+                    monthlyDebt = remainingNeed;
+                    cumulativeDebt += monthlyDebt;
+                }
+            }
+
+            // Calculate the updated cash position before debt repayment
+            const updatedCashPosition = cashPosition + netCashflow + monthlyEquity + monthlyDebt;
+
+            // Debugging: Log intermediate values before debt repayment
+            console.log('[Intermediate Values] Month:', month, {
+                updatedCashPosition,
+                netCashflow,
+                monthlyEquity,
+                monthlyDebt,
+                debtRepayment,
+                cumulativeDebt
+            });
+
+            // Update cashPosition logic to accumulate correctly
+            if (netCashflow > 0) {
+                cashPosition += netCashflow; // Accumulate positive net cashflows
+            } else {
+                cashPosition += netCashflow; // Deduct negative net cashflows
+            }
+
+            // Ensure debt repayment does not zero out cashPosition unnecessarily
+            if (cashPosition >= debtRepayment) {
+                cashPosition -= debtRepayment; // Deduct debt repayment if cashPosition allows
+            } else {
+                debtRepayment = cashPosition; // Adjust debt repayment to available cash
+                cashPosition = 0; // Set cashPosition to zero if fully used
+            }
+
+            // Debugging: Log final cash position after debt repayment
+            console.log('[Final Cash Position] Month:', month, {
+                cashPosition,
+                debtRepayment,
+                cumulativeDebt
+            });
+
+            const debtInterest = cumulativeDebt * (this.project.debtInterestRate / 100);
+            cumulativeDebt += debtInterest;
+
+            projections.push({
+                month,
+                date: new Date(currentDate),
+                inflow,
+                outflow,
+                netCashflow,
+                equityCap,
+                monthlyEquity,
+                monthlyDebt,
+                debtRepayment,
+                cumulativeEquity,
+                cumulativeDebt,
+                debtInterest,
+                cashPosition,
+                commercializationProgress
+            });
+
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+        }
+        
+        return projections;
+    }
+
+    /**
+     * Run the complete calculation
+     */
+    calculate() {
+        if (!this.project) {
+            throw new Error('Project not initialized. Call initializeProject() first.');
+        }
+        console.log('[Calculation] Starting calculation for project:', this.project);
+        const cashflowProjections = this.generateCashflowProjections();
+        
+        // Calculate summary metrics
+        const totalInflows = cashflowProjections.reduce((sum, p) => sum + p.inflow, 0);
+        const totalOutflows = cashflowProjections.reduce((sum, p) => sum + p.outflow, 0);
+        const maxEquity = Math.max(...cashflowProjections.map(p => p.cumulativeEquity));
+        const maxDebt = Math.max(...cashflowProjections.map(p => p.cumulativeDebt));
+        
+        // Find when cashflow turns positive/negative
+        const cashflowTurns = this.findCashflowTurns(cashflowProjections);
+        
+        this.results = {
+            projections: cashflowProjections,
+            summary: {
+                totalInflows,
+                totalOutflows,
+                netResult: totalInflows - totalOutflows,
+                maxEquity,
+                maxDebt,
+                adjustedTTC: this.calculateAdjustedTTC(),
+                cashflowTurns
+            }
+        };
+        console.log('[Calculation] Summary:', this.results.summary);
+        return this.results;
+    }
+
+    /**
+     * Find when cashflow turns positive/negative
+     */
+    findCashflowTurns(projections) {
+        const turns = [];
+        let previousSign = null;
+        projections.forEach(projection => {
+            const currentSign = projection.netCashflow >= 0 ? 'positive' : 'negative';
+            if (previousSign && previousSign !== currentSign) {
+                turns.push({
+                    date: projection.date,
+                    from: previousSign,
+                    to: currentSign
+                });
+                console.log('[Cashflow Turn] Date:', projection.date, 'From:', previousSign, 'To:', currentSign);
+            }
+            previousSign = currentSign;
+        });
+        return turns;
+    }
+
+    /**
+     * Get calculation results
+     */
+    getResults() {
+        return this.results;
+    }
+
+    /**
+     * Export results to different formats
+     */
+    exportResults(format = 'json') {
+        if (!this.results) {
+            throw new Error('No results available. Run calculate() first.');
+        }
+        
+        switch (format) {
+            case 'json':
+                return JSON.stringify(this.results, null, 2);
+            case 'csv':
+                return this.exportToCSV();
+            default:
+                throw new Error(`Unsupported export format: ${format}`);
+        }
+    }
+
+    /**
+     * Export results to CSV format
+     */
+    exportToCSV() {
+        const headers = [
+            'Mois', 'Date', 'Encaissements', 'Décaissements', 'Flux Net',
+            'Plafond FP', 'FP Mensuel', 'Dette Mensuelle', 'FP Cumulé',
+            'Dette Cumulée', 'Intérêts Dette', 'Position Trésorerie', 'Commercialisation %'
+        ];
+        
+        const rows = this.results.projections.map(p => [
+            p.month,
+            p.date.toLocaleDateString('fr-FR'),
+            p.inflow.toFixed(2),
+            p.outflow.toFixed(2),
+            p.netCashflow.toFixed(2),
+            p.equityCap.toFixed(2),
+            p.monthlyEquity.toFixed(2),
+            p.monthlyDebt.toFixed(2),
+            p.cumulativeEquity.toFixed(2),
+            p.cumulativeDebt.toFixed(2),
+            p.debtInterest.toFixed(2),
+            p.cashPosition.toFixed(2),
+            p.commercializationProgress.toFixed(1)
+        ]);
+        
+        return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    }
+}
+
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = RealEstateCalculator;
+}
+
+// Global access for browser environment
+if (typeof window !== 'undefined') {
+    window.RealEstateCalculator = RealEstateCalculator;
+}
